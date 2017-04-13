@@ -530,4 +530,48 @@ begin
 end;
 'language 'plpgsql';
 
+----------------------------- Edit an Auction -----------------------------
 
+CREATE OR REPLACE FUNCTION editAuction(
+	auctionID INTEGER,
+    pItemID     INTEGER,
+    pStartPrice INTEGER,
+    pStartDate  DATE,
+    pEndDate    DATE
+    ) 
+RETURNS INT AS'
+DECLARE
+    lTimeCurrent TIMESTAMP;
+    lUID        INTEGER;
+    lItemID       INTEGER;
+    lStartDate DATE;
+BEGIN 
+    SELECT into lStartDate id FROM Auction WHERE id = auctionID;
+
+    SELECT into lTimeCurrent  ''now'';
+    -- Auction Start Date must be after the current time.
+    if(pStartDate < lTimeCurrent) then
+        return -400;
+    end if;
+
+    if(lStartDate > lTimeCurrent) then
+        return -400;
+    end if;
+
+    SELECT into lItemID id FROM Item WHERE id = pItemID AND users_id = lUID;
+
+    -- Item does not exist
+    if(lItemID is null) then
+        return -400;
+    end if;
+
+    UPDATE Auction
+        set item_id = lItemID,
+        start_date = pStartDate,
+        end_date = pEndDate,
+        min_price = pStartPrice
+        where id = auctionID;
+
+    return 200;
+END; 
+' language 'plpgsql';
